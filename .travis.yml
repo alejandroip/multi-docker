@@ -1,0 +1,23 @@
+language: generic
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t alejandroip/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true alejandroip/react-test npm test
+
+after_success:
+  - docker build -t alejandroip/multi-client ./client
+  - docker build -t alejandroip/multi-nginx ./nginx
+  - docker build -t alejandroip/multi-server ./server
+  - docker build -t alejandroip/multi-worker ./worker
+  # Abrir sesión en docker hub
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Ahora tenemos que subir todas estas imágenes a docker hub
+  - docker push alejandroip/multi-client
+  - docker push alejandroip/multi-nginx
+  - docker push alejandroip/multi-server
+  - docker push alejandroip/multi-worker
